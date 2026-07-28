@@ -156,3 +156,19 @@ Product Support Engineer
 Transitioning into Cloud Engineering
 
 Bengaluru, India
+## Monitoring
+
+CloudWatch Dashboard: `ahamed-banking-production`
+
+Monitors all layers simultaneously:
+- EC2 CPU utilization
+- RDS connections and storage
+- Lambda invocations and errors (both functions)
+- SQS queue depths (both queues)
+- API Gateway request count and latency
+- Recent Lambda log events (live query)
+
+Alarms configured:
+- EC2 CPU > 70%: SNS email alert
+- RDS CPU > 50%: SNS email alert
+- Lambda errors >= 1: SNS email alert
