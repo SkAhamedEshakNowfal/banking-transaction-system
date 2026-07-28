@@ -147,15 +147,7 @@ banking-app/
 
 ---
 
-# Engineer
 
-Shaik Ahamed Eshak Nowfal
-
-Product Support Engineer
-
-Transitioning into Cloud Engineering
-
-Bengaluru, India
 ## Monitoring
 
 CloudWatch Dashboard: `ahamed-banking-production`
@@ -172,3 +164,22 @@ Alarms configured:
 - EC2 CPU > 70%: SNS email alert
 - RDS CPU > 50%: SNS email alert
 - Lambda errors >= 1: SNS email alert
+
+
+## Proactive Alerting & Incident Response
+- **Lambda Pipeline Monitoring**: Configured a CloudWatch Alarm (`Lambda-Errors-Banking-Pipeline`) to track execution failures.
+- **Automated Notification Loop**: Linked the alarm to an **Amazon SNS topic** (`ahamed-alerts`) to instantly dispatch email notifications to administrators when state changes occur.
+- **Verified Operational Flow**: Validated system transitions (e.g., `INSUFFICIENT_DATA` ──► `OK`) through automated cloud notifications, ensuring complete visibility over system health.
+
+
+
+
+# Engineer
+
+Shaik Ahamed Eshak Nowfal
+
+Product Support Engineer
+
+Transitioning into Cloud Engineering
+
+Bengaluru, India
