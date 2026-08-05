@@ -1,0 +1,13 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.git/
+.gitignore
+README.md
+ARCHITECTURE.md
+*.log
+test_e2e.sh
+deployment-notes.txt
+.env
+screenshots/
