@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  banking-app:
+    image: banking-app:v1.0
+    container_name: banking-production
+    ports:
+      - "5001:5000"
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_USER=${DB_USER:-admin}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME:-bankingapp}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "app=banking-transaction-system"
+      - "engineer=Shaik Ahamed Eshak Nowfal"
+      - "version=1.0"
