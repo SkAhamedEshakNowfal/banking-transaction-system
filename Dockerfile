@@ -1,58 +1,80 @@
-# Production Dockerfile for Banking Transaction System
-# Engineer: Shaik Ahamed Eshak Nowfal
+# =============================================================
+# Stage 1: Builder
+# Purpose: compile Python packages that need C extensions
+# This stage is DISCARDED after build — never in final image
+# =============================================================
+FROM python:3.12-slim AS builder
 
-# Use slim Python image — ~130MB vs 645MB for ubuntu
-FROM python:3.12-slim
-
-# Metadata
-LABEL maintainer="Shaik Ahamed Eshak Nowfal"
-LABEL application="banking-transaction-system"
-LABEL version="1.0"
-
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-ENV FLASK_ENV=production
-
-# Create non-root user for security (never run as root in production)
-RUN groupadd -r bankingapp && useradd -r -g bankingapp bankingapp
-
-# Set working directory
-WORKDIR /app
-
-# Install system dependencies (mysql client for pymysql)
+# Install build tools (gcc, headers needed to compile pymysql)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         gcc \
         default-libmysqlclient-dev \
         pkg-config \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements.txt .
+
+# Install packages to /install directory
+# --prefix=/install = all files go to /install instead of system Python
+# This makes it easy to copy JUST the packages to runtime stage
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+
+# =============================================================
+# Stage 2: Runtime
+# Purpose: minimal production image with only what is needed
+# This IS the final image — what gets pushed to ECR
+# =============================================================
+FROM python:3.12-slim AS runtime
+
+# Metadata
+LABEL maintainer="Shaik Ahamed Eshak Nowfal"
+LABEL application="banking-transaction-system"
+LABEL version="2.0"
+LABEL build-type="multi-stage"
+
+# Security: non-root user
+RUN groupadd -r bankingapp && useradd -r -g bankingapp bankingapp
+
+# Set environment
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV FLASK_ENV=production
+
+# Install ONLY runtime system dependencies
+# No gcc here — runtime does not need to compile anything
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        default-libmysqlclient-dev \
         curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first (layer caching)
-COPY requirements.txt .
+# Set working directory
+WORKDIR /app
 
-# Install Python dependencies
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+# Copy compiled packages from builder stage
+# gcc is NOT copied — only the compiled .so files and Python packages
+COPY --from=builder /install /usr/local
 
 # Copy application code
 COPY app.py .
 
-# Change ownership to non-root user
+# Set ownership
 RUN chown -R bankingapp:bankingapp /app
 
 # Switch to non-root user
 USER bankingapp
 
-# Document exposed port
+# Document port
 EXPOSE 5000
 
-# Health check — Docker monitors container health
+# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:5000/health || exit 1
 
-# Production command: gunicorn with 2 workers
+# Production command
 CMD ["gunicorn", "--workers", "2", "--bind", "0.0.0.0:5000", \
      "--timeout", "30", "--log-level", "info", "app:app"]

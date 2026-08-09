@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   banking-app:
-    image: banking-app:v1.0
+    image: banking-app:v2.0-multistage
     container_name: banking-production
     ports:
       - "5001:5000"
